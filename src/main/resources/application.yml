@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/categories
+    username: postgres
+    password: 12345
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+telegram:
+  bots:
+    - name: category_tbot
+      token: 7995618135:AAHBhJjK1kK65DlhMCPBotuV_hkmqo7AqLc
