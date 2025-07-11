@@ -15,15 +15,15 @@ public class Category {
     @ManyToOne
     private Category parent;
 
+    // Список дочерних категорий.
+    // mappedBy = "parent" — связь устанавливается по полю parent в дочерней категории.
+    // cascade = CascadeType.ALL — все операции (persist, remove и др.) применяются к дочерним категориям.
+    // orphanRemoval = true — при удалении дочерней категории из списка она также удаляется из базы данных.
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Category> children = new ArrayList<>();
 
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getName() {
