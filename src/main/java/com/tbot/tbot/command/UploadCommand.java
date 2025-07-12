@@ -1,6 +1,8 @@
 package com.tbot.tbot.command;
 
 import com.tbot.tbot.service.CategoryExcelService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -13,6 +15,8 @@ import org.telegram.telegrambots.meta.api.objects.Message;
  */
 @Component
 public class UploadCommand implements BotCommand {
+
+    private static final Logger logger = LoggerFactory.getLogger(UploadCommand.class);
 
     @Autowired
     private CategoryExcelService excelService;
@@ -39,6 +43,7 @@ public class UploadCommand implements BotCommand {
                         .text("Категории успешно загружены из Excel.")
                         .build();
             } catch (Exception e) {
+                logger.error("Ошибка при загрузке файла", e);
                 return SendMessage.builder()
                         .chatId(message.getChatId().toString())
                         .text("Ошибка при загрузке файла.")

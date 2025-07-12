@@ -3,6 +3,8 @@ package com.tbot.tbot.controller;
 import com.tbot.tbot.command.CommandDispatcher;
 import com.tbot.tbot.service.CategoryService;
 import com.tbot.tbot.service.CategoryExcelService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -24,6 +26,8 @@ import java.io.InputStream;
  */
 @Component
 public class CategoryBot extends TelegramLongPollingBot {
+
+    private static final Logger logger = LoggerFactory.getLogger(CategoryBot.class);
 
     private final CommandDispatcher dispatcher;
     private final CategoryService categoryService;
@@ -55,13 +59,10 @@ public class CategoryBot extends TelegramLongPollingBot {
         if (update.hasMessage()) {
             var message = update.getMessage();
             if (message.hasText()) {
-                // Обработка текстовых команд
                 var response = dispatcher.dispatch(message);
                 try {
                     execute(response);
-                    // Если команда /download, отправить Excel-файл
                     if ("/download".equals(message.getText())) {
-                        // Получаем все категории
                         var categories = categoryService.getAllCategories();
                         // Экспортируем категории в Excel
                         var excel = categoryExcelService.exportCategories(categories);
@@ -75,17 +76,14 @@ public class CategoryBot extends TelegramLongPollingBot {
                                 .document(inputFile)
                                 .caption("Дерево категорий в Excel")
                                 .build();
-                        // Отправляем Excel-файл пользователю
                         execute(docMsg);
                     }
                 } catch (Exception e) {
-                    // Логируем ошибку при обработке команды или отправке файла
-                    e.printStackTrace();
+                    logger.error("Ошибка при обработке команды или отправке файла", e);
                 }
             } else if (message.hasDocument()) {
                 // обработка загрузки Excel-файла
                 var document = message.getDocument();
-                // Проверяем, что файл имеет расширение .xlsx
                 if (document.getFileName().endsWith(".xlsx")) {
                     try {
                         // Получаем файл с серверов Telegram
@@ -98,20 +96,19 @@ public class CategoryBot extends TelegramLongPollingBot {
                             // Импортируем категории из Excel
                             categoryExcelService.importCategories(inputStream);
                         }
-                        // Отправляем сообщение об успешной загрузке
                         execute(org.telegram.telegrambots.meta.api.methods.send.SendMessage.builder()
                                 .chatId(message.getChatId().toString())
                                 .text("Категории успешно загружены из Excel.")
                                 .build());
                     } catch (Exception e) {
-                        // В случае ошибки отправляем сообщение об ошибке
+                        logger.error("Ошибка при загрузке Excel-файла", e);
                         try {
                             execute(org.telegram.telegrambots.meta.api.methods.send.SendMessage.builder()
                                     .chatId(message.getChatId().toString())
                                     .text("Ошибка при загрузке файла.")
                                     .build());
                         } catch (TelegramApiException ex) {
-                            throw new RuntimeException(ex);
+                            logger.error("Ошибка при отправке сообщения об ошибке загрузки файла", ex);
                         }
                     }
                 } else {
@@ -122,7 +119,7 @@ public class CategoryBot extends TelegramLongPollingBot {
                                 .text("Пожалуйста, загрузите Excel-файл (.xlsx).")
                                 .build());
                     } catch (TelegramApiException e) {
-                        throw new RuntimeException(e);
+                        logger.error("Ошибка при отправке сообщения о неверном формате файла", e);
                     }
                 }
             }
