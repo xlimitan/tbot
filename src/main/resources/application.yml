@@ -10,4 +10,4 @@ spring:
 
 telegram:
   bot:
-    token: 7995618135:AAHBhJjK1kK65DlhMCPBotuV_hkmqo7AqLc
+    token: ${TELEGRAM_BOT_TOKEN}
