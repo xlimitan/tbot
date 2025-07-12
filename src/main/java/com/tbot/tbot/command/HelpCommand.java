@@ -11,11 +11,6 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 @Component
 public class HelpCommand implements BotCommand {
 
-    /**
-     * Проверяет, поддерживает ли команда переданный текст.
-     * @param commandText текст команды
-     * @return true, если команда поддерживается
-     */
     @Override
     public boolean supports(String commandText) {
         return commandText.equals("/help");
@@ -29,13 +24,15 @@ public class HelpCommand implements BotCommand {
     @Override
     public SendMessage handle(Message message) {
         String helpText = """
-                Список доступных команд:
-                /addElement <название> — добавить корневой элемент
-                /addElement <родитель> <дочерний> — добавить подкатегорию
-                /removeElement <название> — удалить категорию и её потомков
-                /viewTree — показать дерево категорий
-                /help — список команд
-                """;
+            Список доступных команд:
+            /addElement <название> — добавить корневой элемент
+            /addElement <родитель> <дочерний> — добавить подкатегорию
+            /removeElement <название> — удалить категорию и её потомков
+            /viewTree — показать дерево категорий
+            /download — скачать дерево категорий в Excel
+            /upload — загрузить категории из Excel-файла
+            /help — список команд
+            """;
         return SendMessage.builder()
                 .chatId(message.getChatId().toString())
                 .text(helpText)

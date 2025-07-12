@@ -1,5 +1,7 @@
 package com.tbot.tbot.command;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -14,15 +16,10 @@ import java.util.List;
 @Component
 public class CommandDispatcher {
 
-    /**
-     * Список доступных команд бота.
-     */
+    private static final Logger logger = LoggerFactory.getLogger(CommandDispatcher.class);
+
     private final List<BotCommand> commands;
 
-    /**
-     * Конструктор диспетчера команд.
-     * @param commands список команд
-     */
     public CommandDispatcher(List<BotCommand> commands) {
         this.commands = commands;
     }
@@ -39,8 +36,12 @@ public class CommandDispatcher {
         for (BotCommand cmd : commands) {
             // Проверяем, поддерживает ли команда данный текст
             if (cmd.supports(text)) {
+                try {
                 // Если команда найдена — вызываем её обработчик и возвращаем результат
                 return cmd.handle(message);
+                } catch (Exception e) {
+                    logger.error("Ошибка при обработке команды: {}", text, e);
+                }
             }
         }
         // Ответ по умолчанию, если команда не найдена

@@ -1,6 +1,8 @@
 package com.tbot.tbot.command;
 
 import com.tbot.tbot.service.CategoryService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -12,24 +14,14 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 @Component
 public class AddElementCommand implements BotCommand {
 
-    /**
-     * Сервис для работы с категориями.
-     */
+    private static final Logger logger = LoggerFactory.getLogger(AddElementCommand.class);
+
     private final CategoryService service;
 
-    /**
-     * Конструктор команды.
-     * @param service сервис категорий
-     */
     public AddElementCommand(CategoryService service) {
         this.service = service;
     }
 
-    /**
-     * Проверяет, поддерживает ли команда переданный текст.
-     * @param commandText текст команды
-     * @return true, если команда поддерживается
-     */
     @Override
     public boolean supports(String commandText) {
         return commandText.startsWith("/addElement");
@@ -45,6 +37,7 @@ public class AddElementCommand implements BotCommand {
         // Разделяем текст сообщения на части по пробелу
         String[] parts = message.getText().split(" ");
         String response;
+        try {
         // Если указано только название категории — добавляем корневую категорию
         if (parts.length == 2) {
             response = service.addCategory(parts[1], null);
@@ -54,6 +47,10 @@ public class AddElementCommand implements BotCommand {
             // В остальных случаях — возвращаем сообщение об ошибке формата
         } else {
             response = "Неверный формат. Используйте: /addElement <родитель> <дочерний>";
+        }
+    } catch (Exception e) {
+        logger.error("Ошибка при добавлении категории", e);
+        response = "Ошибка при добавлении категории.";
         }
         // Формируем ответное сообщение
         return SendMessage.builder()

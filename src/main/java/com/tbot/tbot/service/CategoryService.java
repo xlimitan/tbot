@@ -15,15 +15,8 @@ import java.util.Optional;
 @Service
 public class CategoryService {
 
-    /**
-     * Репозиторий для работы с сущностями Category.
-     */
     private final CategoryRepository repo;
 
-    /**
-     * Конструктор сервиса категорий.
-     * @param repo репозиторий категорий
-     */
     public CategoryService(CategoryRepository repo) {
         this.repo = repo;
     }
@@ -103,5 +96,9 @@ public class CategoryService {
         // Удаляем найденную категорию
         repo.delete(opt.get());
         return "Категория удалена: " + name;
+    }
+
+    public List<Category> getAllCategories() {
+        return repo.findAll();
     }
 }
