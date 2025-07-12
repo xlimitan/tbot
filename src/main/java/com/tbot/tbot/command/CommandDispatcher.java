@@ -14,15 +14,8 @@ import java.util.List;
 @Component
 public class CommandDispatcher {
 
-    /**
-     * Список доступных команд бота.
-     */
     private final List<BotCommand> commands;
 
-    /**
-     * Конструктор диспетчера команд.
-     * @param commands список команд
-     */
     public CommandDispatcher(List<BotCommand> commands) {
         this.commands = commands;
     }

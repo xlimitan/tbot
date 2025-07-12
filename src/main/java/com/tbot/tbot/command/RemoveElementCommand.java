@@ -12,24 +12,12 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 @Component
 public class RemoveElementCommand implements BotCommand {
 
-    /**
-     * Сервис для работы с категориями.
-     */
     private final CategoryService service;
 
-    /**
-     * Конструктор команды.
-     * @param service сервис категорий
-     */
     public RemoveElementCommand(CategoryService service) {
         this.service = service;
     }
 
-    /**
-     * Проверяет, поддерживает ли команда переданный текст.
-     * @param commandText текст команды
-     * @return true, если команда поддерживается
-     */
     @Override
     public boolean supports(String commandText) {
         return commandText.startsWith("/removeElement");

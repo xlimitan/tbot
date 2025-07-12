@@ -9,6 +9,5 @@ spring:
     show-sql: true
 
 telegram:
-  bots:
-    - name: category_tbot
-      token: 7995618135:AAHBhJjK1kK65DlhMCPBotuV_hkmqo7AqLc
+  bot:
+    token: 7995618135:AAHBhJjK1kK65DlhMCPBotuV_hkmqo7AqLc
