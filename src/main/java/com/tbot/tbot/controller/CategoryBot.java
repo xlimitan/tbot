@@ -13,6 +13,7 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
 /**
@@ -65,18 +66,19 @@ public class CategoryBot extends TelegramLongPollingBot {
                     if ("/download".equals(message.getText())) {
                         var categories = categoryService.getAllCategories();
                         // Экспортируем категории в Excel
-                        var excel = categoryExcelService.exportCategories(categories);
-                        // Создаём InputFile для отправки документа
-                        var inputFile = new org.telegram.telegrambots.meta.api.objects.InputFile(
-                                new java.io.ByteArrayInputStream(excel.toByteArray()), "categories.xlsx"
-                        );
-                        // Формируем сообщение с документом
-                        var docMsg = org.telegram.telegrambots.meta.api.methods.send.SendDocument.builder()
-                                .chatId(message.getChatId().toString())
-                                .document(inputFile)
-                                .caption("Дерево категорий в Excel")
-                                .build();
-                        execute(docMsg);
+                        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                            categoryExcelService.exportCategoriesToExcel(categories, out);
+                            var inputFile = new org.telegram.telegrambots.meta.api.objects.InputFile(
+                                    new java.io.ByteArrayInputStream(out.toByteArray()), "categories.xlsx"
+                            );
+                            // Формируем сообщение с документом
+                            var docMsg = org.telegram.telegrambots.meta.api.methods.send.SendDocument.builder()
+                                    .chatId(message.getChatId().toString())
+                                    .document(inputFile)
+                                    .caption("Дерево категорий в Excel")
+                                    .build();
+                            execute(docMsg);
+                        }
                     }
                 } catch (Exception e) {
                     logger.error("Ошибка при обработке команды или отправке файла", e);

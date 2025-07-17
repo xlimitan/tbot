@@ -25,13 +25,13 @@ public class HelpCommand implements BotCommand {
     public SendMessage handle(Message message) {
         String helpText = """
             Список доступных команд:
-            /addElement <название> — добавить корневой элемент
-            /addElement <родитель> <дочерний> — добавить подкатегорию
-            /removeElement <название> — удалить категорию и её потомков
+            /addElement категория — добавить категорию
+            /addElement категория подкатегория — добавить подкатегорию
+            /removeElement категория — удалить категорию и её подкатегории
             /viewTree — показать дерево категорий
-            /download — скачать дерево категорий в Excel
-            /upload — загрузить категории из Excel-файла
-            /help — список команд
+            /download — скачать категории (Excel)
+            /upload — загрузить категории (Excel)
+            /help — справка
             """;
         return SendMessage.builder()
                 .chatId(message.getChatId().toString())
