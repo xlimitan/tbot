@@ -7,9 +7,9 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 
 /**
@@ -32,25 +32,48 @@ public class CategoryExcelService {
     }
 
     /**
-     * Экспортирует список категорий в Excel-файл.
-     * @param categories список категорий для экспорта
-     * @return поток с данными Excel-файла
+     * Экспортирует список категорий в Excel-файл с двумя листами:
+     * <ul>
+     *   <li>Лист "Категории" — только корневые категории (без родителя).</li>
+     *   <li>Лист "Подкатегории" — только подкатегории (с указанием родителя).</li>
+     * </ul>
+     * В каждом листе ID — это порядковый номер строки в рамках листа.
+     * @param categories список всех категорий для экспорта
+     * @param out выходной поток для записи Excel-файла
      * @throws IOException при ошибке записи файла
      */
-    public ByteArrayOutputStream exportCategories(List<Category> categories) throws IOException {
+    public void exportCategoriesToExcel(List<Category> categories, OutputStream out) throws IOException {
         Workbook workbook = new XSSFWorkbook();
-        Sheet sheet = workbook.createSheet("Categories");
-        int rowNum = 0;
-        // Записываем каждую категорию в отдельную строку
+        // Лист для корневых категорий
+        Sheet rootSheet = workbook.createSheet("Категории");
+        Row rootHeader = rootSheet.createRow(0);
+        rootHeader.createCell(0).setCellValue("ID");
+        rootHeader.createCell(1).setCellValue("Название");
+        int rootRowNum = 1;
         for (Category category : categories) {
-            Row row = sheet.createRow(rowNum++);
-            row.createCell(0).setCellValue(category.getName());
-            row.createCell(1).setCellValue(category.getParent() != null ? category.getParent().getName() : "");
+            if (category.getParent() == null) {
+                Row row = rootSheet.createRow(rootRowNum++);
+                row.createCell(0).setCellValue(category.getId());
+                row.createCell(1).setCellValue(category.getName());
+            }
         }
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        // Лист для подкатегорий
+        Sheet subSheet = workbook.createSheet("Подкатегории");
+        Row subHeader = subSheet.createRow(0);
+        subHeader.createCell(0).setCellValue("ID");
+        subHeader.createCell(1).setCellValue("Название");
+        subHeader.createCell(2).setCellValue("Категория");
+        int subRowNum = 1;
+        for (Category category : categories) {
+            if (category.getParent() != null) {
+                Row row = subSheet.createRow(subRowNum++);
+                row.createCell(0).setCellValue(category.getId());
+                row.createCell(1).setCellValue(category.getName());
+                row.createCell(2).setCellValue(category.getParent().getName());
+            }
+        }
         workbook.write(out);
         workbook.close();
-        return out;
     }
 
     /**
@@ -62,16 +85,24 @@ public class CategoryExcelService {
      */
     public void importCategories(InputStream inputStream) throws IOException {
         Workbook workbook = new XSSFWorkbook(inputStream);
-        Sheet sheet = workbook.getSheetAt(0);
-        for (Row row : sheet) {
-            // Пропускаем пустые строки и строки без названия категории
-            if (row == null || row.getCell(0) == null) continue;
-            String name = getCellString(row.getCell(0));
+        // Импорт корневых категорий (лист 0)
+        Sheet rootSheet = workbook.getSheetAt(0);
+        for (Row row : rootSheet) {
+            if (row.getRowNum() == 0) continue; // пропустить заголовок
+            String name = getCellString(row.getCell(1));
             if (name == null || name.isBlank()) continue;
-            // Получаем имя родителя, если оно указано
-            String parentName = row.getCell(1) != null ? getCellString(row.getCell(1)) : null;
-            // Добавляем категорию через сервис, если имя не пустое
-            categoryService.addCategory(name, (parentName == null || parentName.isBlank()) ? null : parentName);
+            categoryService.addCategory(name, null);
+        }
+        // Импорт подкатегорий (лист 1)
+        Sheet subSheet = workbook.getNumberOfSheets() > 1 ? workbook.getSheetAt(1) : null;
+        if (subSheet != null) {
+            for (Row row : subSheet) {
+                if (row.getRowNum() == 0) continue; // пропустить заголовок
+                String name = getCellString(row.getCell(1));
+                String parentName = getCellString(row.getCell(2));
+                if (name == null || name.isBlank() || parentName == null || parentName.isBlank()) continue;
+                categoryService.addCategory(name, parentName);
+            }
         }
         workbook.close();
     }
@@ -96,6 +127,20 @@ public class CategoryExcelService {
                 return "";
             default:
                 return cell.toString();
+        }
+    }
+
+    /**
+     * Экспортирует список категорий в Excel-файл с двумя листами и возвращает его как массив байт.
+     * Используется для передачи Excel-файла, например, через HTTP или Telegram.
+     * @param categories список всех категорий для экспорта
+     * @return массив байт с данными Excel-файла
+     * @throws IOException при ошибке записи файла
+     */
+    public byte[] exportCategoriesAsBytes(List<Category> categories) throws IOException {
+        try (var out = new java.io.ByteArrayOutputStream()) {
+            exportCategoriesToExcel(categories, out);
+            return out.toByteArray();
         }
     }
 }
